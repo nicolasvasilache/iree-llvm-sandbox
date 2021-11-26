@@ -27,6 +27,16 @@ def LinalgExtTiling : Pass<"linalg-ext-tiling", "FuncOp"> {
   ];
 }
 
+def InParallelToSequentialFor : Pass<"linalg-in-parallel-to-sequential-for", "FuncOp"> {
+  let summary = "Pass to lower linalg_ext.in_parallel to scf.for.";
+  let constructor = "mlir::linalg_ext::createInParallelToSequentialForPass()";
+  let dependentDialects = [
+    "AffineDialect",
+    "tensor::TensorDialect",
+    "scf::SCFDialect"
+  ];
+}
+
 def TileToSequentialFor : Pass<"linalg-tile-to-sequential-for", "FuncOp"> {
   let summary = "Pass to lower linalg_ext.tile to scf.for.";
   let constructor = "mlir::linalg_ext::createTileToSequentialForPass()";
@@ -46,5 +56,5 @@ def TileToInParallel : Pass<"linalg-tile-to-in-parallel", "FuncOp"> {
     "scf::SCFDialect"
   ];
 }
-
+ 
 #endif // DIALECTS_LINALGEXT_PASSES

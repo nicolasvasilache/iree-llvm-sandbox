@@ -264,20 +264,8 @@ def LinalgExt_PerformConcurrentlyOp : LinalgExt_PureOp<"perform_concurrently", [
   // TODO(apaszke, ntv): Add an interface for ops that can appear inside
   // perform_concurrently.
   let extraClassDeclaration = [{
-    SmallVector<Type> yieldedTypes() {
-      SmallVector<Type> ret;
-      for (Operation& op : *getBody()) {
-        if (auto sliceOp = llvm::dyn_cast<ParallelInsertSliceOp>(op)) {
-          ret.push_back(sliceOp.yieldedType());
-          continue;
-        }
-        if (auto endPerformOp = llvm::dyn_cast<EndPerformConcurrentlyOp>(op)) {
-          continue;
-        }
-        llvm_unreachable("Unexpected operation in perform_concurrently");
-      }
-      return ret;
-    };
+    SmallVector<Type> yieldedTypes();
+    SmallVector<ParallelInsertSliceOp> yieldingOps();
   }];
 }
 
@@ -307,8 +295,8 @@ def LinalgExt_ParallelInsertSliceOp : LinalgExt_PureOp<"parallel_insert_slice", 
     will be equal to the one in the original tensor.
 
     Note that we cannot mark this operation as pure (NoSideEffects), even
-    though it has no side effects, because it will get DCEd during
-    canonincalization. Ideally we would use attributes instead of those funny
+    though it has no side effects, because it will get DCEd during 
+    canonicalization. Ideally we would use attributes instead of those funny
     terminating ops, but attributes cannot refer to SSA values at the moment, so
     it's the best we can do for now.
   }];
