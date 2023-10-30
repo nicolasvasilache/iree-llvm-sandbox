@@ -1,0 +1,10 @@
+absl-py==2.0.0
+chex==0.1.84
+jax==0.4.19
+jaxlib==0.4.19
+ml-dtypes==0.3.1
+numpy==1.26.1
+opt-einsum==3.3.0
+scipy==1.11.3
+toolz==0.12.0
+typing_extensions==4.8.0

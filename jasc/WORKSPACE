@@ -1,0 +1,130 @@
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+LLVM_COMMIT = "4b581125ed683e1ed683aa583d4abb17acd8d4e8"
+LLVM_SHA256 = "d99934416885ea2ae5b3b932bbb2b1b459c3730504320af4cec2c5321fd5f38c"
+
+http_archive(
+    name = "llvm-raw",
+    build_file_content = "# empty",
+    sha256 = LLVM_SHA256,
+    strip_prefix = "llvm-project-" + LLVM_COMMIT,
+    urls = ["https://github.com/llvm/llvm-project/archive/{commit}.tar.gz".format(commit = LLVM_COMMIT)],
+    patch_args = ["-p1"],
+    patches = ["//:patches/llvm_build.patch"]
+)
+
+load("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
+llvm_configure(name = "llvm-project", targets = ["X86", "AArch64", "AMDGPU", "ARM", "NVPTX"])
+
+XLA_COMMIT = "8f27d321a86029c336558bfbd694adfca6973e22"
+XLA_SHA256 = "e8225ee13a8e69c49554d0ec87a0a509c645a1b267c557cd5b9bfe175a4b3f29"
+
+http_archive(
+    name = "xla",
+    sha256 = XLA_SHA256,
+    strip_prefix = "xla-" + XLA_COMMIT,
+    urls = ["https://github.com/openxla/xla/archive/{commit}.tar.gz".format(commit = XLA_COMMIT)],
+    patch_args = ["-p1"],
+    patches = ["//:patches/xla.patch"],
+)
+
+PYRULES_COMMIT = "693a1587baf055979493565933f8f40225c00c6d"
+PYRULES_SHA256 = "c493a9506b5e1ea99e3c22fb15e672cdd2a6fa19fd7c627ec5d485aced23e50a"
+
+# PYRULES_COMMIT = "fe33a4582c37499f3caeb49a07a78fc7948a8949"
+# PYRULES_SHA256 = "cfa6957832ae0e0c7ee2ccf455a888a291e8419ed8faf45f4420dd7414d5dd96"
+
+http_archive(
+    name = "rules_python",
+    sha256 = PYRULES_SHA256,
+    strip_prefix = "rules_python-" + PYRULES_COMMIT,
+    urls = ["https://github.com/bazelbuild/rules_python/archive/{commit}.tar.gz".format(commit = PYRULES_COMMIT)]
+)
+
+JAX_COMMIT = "57e33dc3b553fc49095090d0389b7cbf0e694728"
+JAX_SHA256 = "3ae51bc5395289af69d4f4e8ee96b5e8ed15899781e400dd03d2a3089f20a9bc"
+
+http_archive(
+    name = "jax",
+    sha256 = JAX_SHA256,
+    strip_prefix = "jax-" + JAX_COMMIT,
+    urls = ["https://github.com/google/jax/archive/{commit}.tar.gz".format(commit = JAX_COMMIT)],
+    patch_args = ["-p1"],
+    patches = ["//:patches/jax_workspace.patch"]
+)
+
+load("@jax//third_party/xla:workspace.bzl", jax_xla_workspace = "repo")
+jax_xla_workspace()
+
+load("@xla//:workspace4.bzl", "xla_workspace4")
+xla_workspace4()
+
+load("@xla//:workspace3.bzl", "xla_workspace3")
+xla_workspace3()
+
+load("@xla//:workspace2.bzl", "xla_workspace2")
+xla_workspace2()
+
+load("@xla//:workspace1.bzl", "xla_workspace1")
+xla_workspace1()
+
+load("@xla//:workspace0.bzl", "xla_workspace0")
+xla_workspace0()
+
+load("@jax//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
+flatbuffers()
+
+load("@jax//third_party/robin_map:workspace.bzl", robin_map = "repo")
+robin_map()
+
+load("@jax//third_party/nanobind:workspace.bzl", nanobind = "repo")
+nanobind()
+
+PYBIND_COMMIT = "8a099e44b3d5f85b20f05828d919d2332a8de841"
+PYBIND_VERSION = "2.11.1"
+PYBIND_SHA256 = ""
+
+http_archive(
+  name = "pybind11_bazel",
+  strip_prefix = "pybind11_bazel-" + PYBIND_COMMIT,
+  urls = ["https://github.com/pybind/pybind11_bazel/archive/{commit}.zip".format(commit = PYBIND_COMMIT)],
+)
+http_archive(
+  name = "pybind11",
+  build_file = "@pybind11_bazel//:pybind11.BUILD",
+  strip_prefix = "pybind11-" + PYBIND_VERSION,
+  urls = ["https://github.com/pybind/pybind11/archive/v{commit}.tar.gz".format(commit = PYBIND_COMMIT)],
+)
+load("@pybind11_bazel//:python_configure.bzl", "python_configure")
+python_configure(name = "local_config_python")
+
+git_repository(
+    name = "pybind11_abseil",
+    remote = "https://github.com/pybind/pybind11_abseil.git",
+    branch = "master",
+)
+
+http_archive(
+  name = "com_google_absl",
+  urls = ["https://github.com/abseil/abseil-cpp/archive/98eb410c93ad059f9bba1bf43f5bb916fc92a5ea.zip"],
+  strip_prefix = "abseil-cpp-98eb410c93ad059f9bba1bf43f5bb916fc92a5ea",
+)
+
+git_repository(
+    name = "status_macros",
+    commit = "1592ab2d4b4f92976fc3f4a6cb3a1323a4b549c3",
+    remote = "https://github.com/jimrogerz/status_macros.git",
+)
+
+
+load("@rules_python//python:pip.bzl", "pip_parse")
+
+pip_parse(
+    name = "pip_deps",
+    requirements_lock = ":requirements.txt",
+)
+
+load("@pip_deps//:requirements.bzl", "install_deps")
+
+install_deps()
