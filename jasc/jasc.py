@@ -34,7 +34,7 @@ from typing import (
 )
 
 import jax
-from jaxsparse.bridge.api import sparse_wrap
+# from jaxsparse.bridge.api import sparse_wrap
 from mlir import ir
 from mlir.dialects import pdl
 from mlir.dialects import transform
@@ -47,12 +47,15 @@ from mlir.dialects.transform import (
     nvgpu,
     sparse_tensor,
     structured,
+    vector,
 )
 
-from jasc import call_kernel
-from jasc import dialect as jasc_dialect
-from jasc import primitives
-from jasc.transform_ops import jasc_transform_ops as jto
+# TODO: these need to be built and installed to be available.
+#
+# from jasc import call_kernel
+# from jasc import dialect as jasc_dialect
+# from jasc import primitives
+# from jasc.transform_ops import jasc_transform_ops as jto
 
 _JASC_AUTO_NORMALIZATION = True
 
@@ -232,7 +235,8 @@ class LoopNormalform(Normalform):
   def _impl(cls, handle: OpHandle) -> OpHandle:
     with handle.apply_patterns():
       structured.ApplyTilingCanonicalizationPatternsOp()
-      jto.ApplyFoldFillIntoPadPatternsOp()
+      # TODO: needs to be built and installed to be available.
+      # jto.ApplyFoldFillIntoPadPatternsOp()
       loop.ApplyForLoopCanonicalizationPatternsOp()
       transform.ApplyCanonicalizationPatternsOp()
 
@@ -590,7 +594,7 @@ class OpHandle(Value):
 
     return ForeachResult(_op=op)
 
-  @jasc_transform(required_normalform=LoopNormalform)
+  # @jasc_transform(required_normalform=LoopNormalform)
   def fuse_into(
       self, containing_op: Union[ir.Operation, ir.OpView, ir.Value]
   ) -> OpHandle:
@@ -670,6 +674,14 @@ class OpHandle(Value):
     )
     self._mlir_value = op.transformed
     return self
+
+  def generalize(self) -> OpHandle:
+    """Generalizes to a `linalg.generic` op.
+
+    Updates this handle to represent the transformed linalg operation.
+    """
+    op = structured.GeneralizeOp(self.mlir_value)
+    return OpHandle(op.transformed)
 
   def interchange(
       self, iterator_interchange: OptionalIntList = None
@@ -956,7 +968,7 @@ class OpHandle(Value):
         loops=[OpHandle(loop) for loop in op.loops],
     )
 
-  @jasc_transform(required_normalform=LoopNormalform)
+  # @jasc_transform(required_normalform=LoopNormalform)
   def tile(
       self,
       *,
