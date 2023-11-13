@@ -4,8 +4,8 @@ from .bindings import *
 
 try:
   from typing import Sequence
-  from mlir import ir
-  from mlir.dialects import pdl
+  from iree.compiler import ir
+  from iree.compiler.dialects import pdl
   from ._ods_common import _cext as _ods_cext
 
 except ImportError as e:

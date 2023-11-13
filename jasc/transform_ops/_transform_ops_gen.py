@@ -1,7 +1,7 @@
 """Trampoline to run generated MLIR Python code.
 
 Generated tablegen dialects expect to be able to find some symbols from the
-mlir.dialects package.
+iree.compiler.dialects package.
 """
 
-from mlir.dialects._transform_ops_gen import _Dialect
+from iree.compiler.dialects._transform_ops_gen import _Dialect

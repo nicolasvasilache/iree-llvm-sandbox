@@ -34,25 +34,27 @@ from typing import (
 )
 
 import jax
-from jaxsparse.bridge.api import sparse_wrap
-from mlir import ir
-from mlir.dialects import pdl
-from mlir.dialects import transform
-from mlir.dialects.bufferization import LayoutMapOption
-from mlir.dialects.transform import (
+# from jaxsparse.bridge.api import sparse_wrap
+from iree.compiler import ir
+# from iree.compiler.dialects import pdl
+from iree.compiler.dialects import transform
+from iree.compiler.dialects.bufferization import LayoutMapOption
+from iree.compiler.dialects.transform import (
     bufferization,
     gpu,
     loop,
     memref,
     nvgpu,
-    sparse_tensor,
+    # sparse_tensor, -> this is not exposed by IREE's API
     structured,
 )
 
-from jasc import call_kernel
-from jasc import dialect as jasc_dialect
-from jasc import primitives
-from jasc.transform_ops import jasc_transform_ops as jto
+# TODO: these need to be built and installed to be available.
+#
+# from jasc import call_kernel
+# from jasc import dialect as jasc_dialect
+# from jasc import primitives
+# from jasc.transform_ops import jasc_transform_ops as jto
 
 _JASC_AUTO_NORMALIZATION = True
 
@@ -232,7 +234,8 @@ class LoopNormalform(Normalform):
   def _impl(cls, handle: OpHandle) -> OpHandle:
     with handle.apply_patterns():
       structured.ApplyTilingCanonicalizationPatternsOp()
-      jto.ApplyFoldFillIntoPadPatternsOp()
+      # TODO: needs to be built and installed to be available.
+      # jto.ApplyFoldFillIntoPadPatternsOp()
       loop.ApplyForLoopCanonicalizationPatternsOp()
       transform.ApplyCanonicalizationPatternsOp()
 
@@ -644,6 +647,15 @@ class OpHandle(Value):
     self._mlir_value = op.transformed
     return self
 
+  def hoist_loop_invariant_subsets(self) -> OpHandle:
+    """Creates a new `loop.hoist_loop_invariant_subsets` op.
+
+    This handle will be updated to represent the result of the transform.
+    """
+    op = loop.HoistLoopInvariantSubsetsOp(self.mlir_value)
+    self._mlir_value = self.mlir_value
+    return self
+
   def hoist_redundant_vector_transfers(self) -> OpHandle:
     """Creates a new `structured.hoist_redundant_vector_transfers` op.
 
@@ -670,6 +682,14 @@ class OpHandle(Value):
     )
     self._mlir_value = op.transformed
     return self
+
+  def generalize(self) -> OpHandle:
+    """Generalizes to a `linalg.generic` op.
+
+    Updates this handle to represent the transformed linalg operation.
+    """
+    op = structured.GeneralizeOp(self.mlir_value)
+    return OpHandle(op.transformed)
 
   def interchange(
       self, iterator_interchange: OptionalIntList = None

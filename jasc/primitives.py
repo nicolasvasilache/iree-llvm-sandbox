@@ -10,10 +10,10 @@ from jax.extend.linear_util import wrap_init
 from jax.interpreters import mlir as jax_mlir
 from jax.interpreters import partial_eval as pe
 from jax.lib import xla_client
-from mlir import ir
-from mlir.dialects import pdl
-from mlir.dialects import stablehlo
-from mlir.dialects import transform
+from iree.compiler import ir
+from iree.compiler.dialects import pdl
+from iree.compiler.dialects import stablehlo
+from iree.compiler.dialects import transform
 
 from jasc import call_kernel
 from jasc import dialect as jasc_dialect
